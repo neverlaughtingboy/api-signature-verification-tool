@@ -36,7 +36,7 @@ public class ApiSignCheckAspect {
     private static final Logger log = LoggerFactory.getLogger(ApiSignCheckAspect.class);
 
     /**
-     * List of current application API authorized caller information
+     * list of current application API authorized caller information
      */
     @Resource
     private ApiAuthorization apiAuthorization;
@@ -49,23 +49,23 @@ public class ApiSignCheckAspect {
     @Before(value = "annotationPointCut()")
     public void checkApiSign() {
 
-        //全局开关检查，禁用开启就跳过校验
+        //global switch check, if disabled, the check will be skipped
         if (apiAuthorization.getDisable())
         {
             return;
         }
 
-        //获取RequestAttributes
+        //get requestAttributes
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
         if (attributes == null) {
             throw new BusinessException("40002001","get ServletRequestAttributes fail");
         }
 
-        //从获取RequestAttributes中获取HttpServletRequest的信息
+        //get httpServletRequest from requestAttributes
         HttpServletRequest request = attributes.getRequest();
 
-        //获取并校验head是否包含必要信息
+        //get and check head contains necessary info
         Map<String,String> headers = RequestUtils.getHeaders(request);
 
         String accessKey = headers.get(RequestHeaderParamConstants.ACCESS_KEY);
@@ -73,27 +73,27 @@ public class ApiSignCheckAspect {
         String signMethod = headers.get(RequestHeaderParamConstants.SIGN_METHOD);
         String sign = headers.get(RequestHeaderParamConstants.SIGN);
         if (StringUtils.isBlank(accessKey) || StringUtils.isBlank(timeStamp) || StringUtils.isBlank(signMethod) || StringUtils.isBlank(sign)) {
-            throw new BusinessException("40002002","header db-access-key,db-timestamp,db-sign-method,db-sign不能为空");
+            throw new BusinessException("40002002","header access-key,timestamp,sign-method,sign can not be blank");
         }
 
-        //获取accessKey对应的accessSecret
+        //get accessSecret by accessKey
         List<AuthorizedClientInfo> authorizedClientInfos = apiAuthorization.getClientInfos();
 
         if (CollectionUtils.isEmpty(authorizedClientInfos)) {
-            throw new BusinessException("40002003","调用权限不足");
+            throw new BusinessException("40002003","no permission");
         }
 
         Optional<AuthorizedClientInfo> authorizedClientInfoOptional = authorizedClientInfos.stream().filter(t->t.getAccessKey().equals(accessKey)).findFirst();
 
         if (!authorizedClientInfoOptional.isPresent()) {
-            throw new BusinessException("40002003","调用权限不足");
+            throw new BusinessException("40002003","no permission");
         }
 
         AuthorizedClientInfo authorizedClientInfo = authorizedClientInfoOptional.get();
         String accessSecret = authorizedClientInfo.getAccessSecret();
-        //比较并返回验签结果
+        //compare and return signature verification results
         if (!checkSign(request,accessKey,accessSecret,request.getMethod().toUpperCase(),signMethod,timeStamp,sign)) {
-            throw new BusinessException("40002008","签名错误");
+            throw new BusinessException("40002008","sign error");
         }
     }
 
