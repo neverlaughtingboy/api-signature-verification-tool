@@ -98,18 +98,18 @@ public class ApiSignCheckAspect {
     }
 
     /**
-     * 校验签名
-     * @param request 请求体
+     * check sign
+     * @param request request
      * @param accessKey accessKey
      * @param accessSecret accessSecret
-     * @param httpMethod 请求方式
-     * @param signMethod 签名方式
-     * @param timeStamp 时间戳
-     * @param sign 签名
-     * @return 验签结果
+     * @param httpMethod httpMethod
+     * @param signMethod signMethod
+     * @param timeStamp timeStamp
+     * @param sign sign
+     * @return check sign result
      */
     private boolean checkSign(HttpServletRequest request,String accessKey,String accessSecret,String httpMethod,String signMethod,String timeStamp,String sign) {
-        // 验证签名
+        // build sign content
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(signMethod);
         stringBuilder.append(httpMethod);
@@ -124,7 +124,7 @@ public class ApiSignCheckAspect {
                 stringBuilder.append(RequestUtils.getBodyParams(request));
             }
             catch (RuntimeException e) {
-                throw new BusinessException("40002004","获取body参数出现异常，异常信息："+e.getMessage());
+                throw new BusinessException("40002004","get body params has an exception,exception message："+e.getMessage());
             }
         }
         else {
@@ -136,8 +136,8 @@ public class ApiSignCheckAspect {
         try {
             signResult = SignUtils.createSign(signMethod,stringBuilder.toString());
         }catch (Exception e){
-            log.error("签名异常信息："+e.getMessage());
-            throw new BusinessException("40002007","签名出现异常");
+            log.error("create sign has an exception,exception message:"+e.getMessage());
+            throw new BusinessException("40002007","create sign has an exception");
         }
         return StringUtils.equals(sign, signResult);
     }
